@@ -2,9 +2,9 @@ package events
 
 import (
 	"errors"
-	"time"
-
 	"github.com/araddon/dateparse"
+	"regexp"
+	"time"
 )
 
 type Event struct {
@@ -21,4 +21,13 @@ func NewEvent(title string, dateStr string) (Event, error) {
 		Title:   title,
 		StartAt: dateParser,
 	}, nil
+}
+
+func isValidateTitle(tilte string) bool {
+	pattern := "^[a-zA-Z0-9 ]{3,250}$"
+	matched, err := regexp.MatchString(pattern, tilte)
+	if err != nil {
+		return false
+	}
+	return matched
 }
