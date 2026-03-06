@@ -27,5 +27,8 @@ func main() {
 		calendar.AddEvent("event 3", event3)
 	}
 	calendar.ShowEvents()
-	fmt.Scanln()
+	_, errScan := fmt.Scanln()
+	if errScan != nil {
+		return
+	}
 }
