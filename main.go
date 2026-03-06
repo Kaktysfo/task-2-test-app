@@ -20,12 +20,13 @@ func main() {
 	} else {
 		calendar.AddEvent("event 2", event2)
 	}
-	event3, err3 := events.NewEvent("", "03.09.2026")
+	event3, err3 := events.NewEvent("popopooop", "03.09.2026")
 	if err3 != nil {
 		fmt.Println("Ошибка создания события:", err3)
 	} else {
 		calendar.AddEvent("event 3", event3)
 	}
+	calendar.DeleteEvent("event 3")
 	calendar.ShowEvents()
 	_, errScan := fmt.Scanln()
 	if errScan != nil {
