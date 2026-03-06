@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Kaktysfo/app/validation"
 	"github.com/araddon/dateparse"
 )
 
@@ -13,8 +14,8 @@ type Event struct {
 }
 
 func NewEvent(title string, dateStr string) (Event, error) {
-	isvalid := isValidateTitle(title)
-	if isvalid {
+	isValid := validation.IsValidateTitle(title)
+	if isValid {
 		dateParser, err := dateparse.ParseAny(dateStr)
 		if err != nil {
 			return Event{}, errors.New("неверный формат даты")
