@@ -5,20 +5,26 @@ import (
 	"fmt"
 
 	"github.com/Kaktysfo/app/events"
-	"github.com/Kaktysfo/app/validation"
-	"github.com/araddon/dateparse"
 )
 
-var calendarEvents = make(map[string]events.Event)
+var calendarEvents = make(map[string]*events.Event)
 var TitleError = errors.New("cобытие с таким именем уже существует")
 var addEventError = errors.New("ошибка добавления события")
 var deleteError = errors.New("ошибка удаления события")
 var showError = errors.New("список событий пуст")
 
-func AddEvent(name, date string) (events.Event, error) {
+type Calendar struct {
+	calendarEvents map[string]*events.Event
+}
+
+func NewCalendar() *Calendar {
+	return &Calendar{calendarEvents: calendarEvents}
+}
+
+func AddEvent(name, date string) (*events.Event, error) {
 	event, err := events.NewEvent(name, date)
 	if err != nil {
-		return events.Event{}, addEventError
+		return &events.Event{}, addEventError
 	}
 	calendarEvents[event.ID] = event
 	fmt.Println("Событие добавлено: ", event.Title)
@@ -55,32 +61,24 @@ func DeleteEvent(name string) error {
 	return nil
 }
 
-func EditEvent(name, newTitle, dateStr string) error {
-	date, dateErr := dateparse.ParseAny(dateStr)
-	if dateErr != nil {
-		return dateErr
+func EditEvent(id, newTitle, dateStr string) error {
+	e, exists := calendarEvents[id]
+	if !exists {
+		return errors.New("не удалось найти событие")
 	}
-	err := fullValidation(name, newTitle)
-	if err != nil {
-		return err
-	}
-	calendarEvents[name] = events.Event{
-		Title:   newTitle,
-		StartAt: date,
-	}
-	fmt.Println("Успешно изменено!", name)
-	return nil
+	err := e.Update(newTitle, dateStr)
+	return err
 }
 
-func fullValidation(name, title string) error {
-	if _, ok := calendarEvents[name]; !ok {
-		return TitleError
-	}
-	if ok := validation.IsValidateTitle(title); !ok {
-		return errors.New("введен некорректно заголовок")
-	}
-	if calendarEvents[name].Title == title {
-		return errors.New("такой заголовок уже существует")
-	}
-	return nil
-}
+//func fullValidation(name, title string) error {
+//	if _, ok := calendarEvents[name]; !ok {
+//		return TitleError
+//	}
+//	if ok := validation.IsValidateTitle(title); !ok {
+//		return errors.New("введен некорректно заголовок")
+//	}
+//	if calendarEvents[name].Title == title {
+//		return errors.New("такой заголовок уже существует")
+//	}
+//	return nil
+//}
