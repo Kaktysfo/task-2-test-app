@@ -10,9 +10,9 @@ import (
 )
 
 type Event struct {
-	ID      string
-	Title   string
-	StartAt time.Time
+	ID      string    `json:"id"`
+	Title   string    `json:"title"`
+	StartAt time.Time `json:"-"`
 }
 
 func getNextID() string {

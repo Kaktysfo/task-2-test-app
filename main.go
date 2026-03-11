@@ -4,12 +4,23 @@ import (
 	"fmt"
 
 	"github.com/Kaktysfo/app/calendar"
+	"github.com/Kaktysfo/app/storage"
 )
 
 func main() {
-	c := calendar.NewCalendar()
+	s := storage.NewStorage("calendar.json")
+	c := calendar.NewCalendar(s)
 
-	event1, err1 := c.AddEvent("Meeting", "2025/06/12")
+	err := c.Load()
+	if err != nil {
+		if err.Error() == "такого файла не существует" {
+			fmt.Println("Файл с событиями не найден. Будет создан новый файл при сохранении.")
+		} else {
+			fmt.Println("Ошибка загрузки данных:", err)
+			return
+		}
+	}
+	event1, err1 := c.AddEvent("jopa", "2025/06/12 14:00")
 	if err1 != nil {
 		fmt.Println("Error:", err1)
 	} else {
@@ -21,9 +32,9 @@ func main() {
 	} else {
 		fmt.Println(event2.Title, "added")
 	}
-	err := c.EditEvent(event2.ID, "Call", "2025/06/12 16:50")
-	if err != nil {
-		fmt.Println("Error:", err)
+	err32 := c.EditEvent(event2.ID, "Call", "2025/06/12 16:50")
+	if err32 != nil {
+		fmt.Println("Error:", err32)
 	} else {
 		fmt.Println("Event updated")
 	}
@@ -31,5 +42,6 @@ func main() {
 	if errShow2 != nil {
 		fmt.Println(errShow2)
 	}
+	defer c.Save()
 	fmt.Scanln()
 }
