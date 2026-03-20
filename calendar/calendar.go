@@ -12,7 +12,7 @@ import (
 var (
 	EventError      = errors.New("cобытие с таким именем уже существует")
 	addEventError   = errors.New("ошибка добавления события")
-	deleteError     = errors.New("ошибка удаления события")
+	deleteFindError = errors.New("событие с таким именем не найдено")
 	showError       = errors.New("список событий пуст")
 	saveError       = errors.New("ошибка маршлинга")
 	deserError      = errors.New("ошибка десериализации")
@@ -22,23 +22,23 @@ var (
 
 type Calendar struct {
 	calendarEvents map[string]*events.Event
-	storage        *storage.Storage
+	storage        storage.Store
 }
 
-func NewCalendar(s *storage.Storage) *Calendar {
+func NewCalendar(s storage.Store) *Calendar {
 	return &Calendar{
 		calendarEvents: make(map[string]*events.Event),
 		storage:        s,
 	}
 }
 
-func (c *Calendar) AddEvent(name, date, pririty string) (*events.Event, error) {
+func (c *Calendar) AddEvent(name, date, priority string) (*events.Event, error) {
 	for _, event := range c.calendarEvents {
 		if event.Title == name {
 			return nil, EventError
 		}
 	}
-	event, err := events.NewEvent(name, date, pririty)
+	event, err := events.NewEvent(name, date, priority)
 	if err != nil {
 		return nil, addEventError
 	}
@@ -63,9 +63,7 @@ func (c *Calendar) ShowEvents() error {
 			event.Priority,
 		)
 	}
-
 	fmt.Println("\n▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲")
-
 	return nil
 }
 
@@ -85,12 +83,14 @@ func (c *Calendar) isEventExistByName(name string) (*events.Event, error) {
 	return nil, EventError
 }
 
-func (c *Calendar) DeleteEvent(name string) error { // не работает функция удаления
-	event, err := c.isEventExistByName(name)
+func (c *Calendar) DeleteEvent(ID string) error {
+	err := c.isEventExistByID(ID)
 	if err != nil {
-		return deleteError
+		return deleteFindError
 	}
-	return c.DeleteEvent(event.ID)
+	delete(c.calendarEvents, ID)
+	fmt.Println("Успешно удалено!")
+	return nil
 }
 
 func (c *Calendar) EditEvent(id, newTitle, dateStr, priority string) error {
@@ -131,16 +131,3 @@ func (c *Calendar) Load() error {
 	}
 	return nil
 }
-
-//func fullValidation(name, title string) error {
-//	if _, ok := calendarEvents[name]; !ok {
-//		return TitleError
-//	}
-//	if ok := validation.IsValidateTitle(title); !ok {
-//		return errors.New("введен некорректно заголовок")
-//	}
-//	if calendarEvents[name].Title == title {
-//		return errors.New("такой заголовок уже существует")
-//	}
-//	return nil
-//}

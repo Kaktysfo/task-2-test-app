@@ -4,48 +4,80 @@ import (
 	"fmt"
 
 	"github.com/Kaktysfo/app/calendar"
+	"github.com/Kaktysfo/app/cmd"
 	"github.com/Kaktysfo/app/storage"
 )
 
 func main() {
-	s := storage.NewStorage("calendar.json")
-	c := calendar.NewCalendar(s)
+	fmt.Println("----Календарь----")
+	jsonStorage := storage.NewJsonStorage("calendar.json")
+	c := calendar.NewCalendar(jsonStorage)
 
-	err := c.Load()
-	if err != nil {
-		if err.Error() == "такого файла не существует" {
-			fmt.Println("Файл с событиями не найден. Будет создан новый файл при сохранении.")
-		} else {
-			fmt.Println("Ошибка загрузки данных:", err)
-			return
-		}
+	// err := c.Load()
+	// if err != nil {
+	// 	fmt.Println("Ошибка загрузки:", err)
+	// }
+	cli := cmd.NewCmd(c)
+	cli.Run()
+	// event1, err1 := c.AddEvent("Завод", "2025/03/11", "Высокий")
+	// if err1 != nil {
+	// 	fmt.Println("Ошибка добавления события:", err1)
+	// } else {
+	// 	fmt.Println("Добавлено:", event1.Title)
+	// }
+	// event2, err2 := c.AddEvent("Работа", "2023/01/11", "Низкий")
+	// if err2 != nil {
+	// 	fmt.Println("Ошибка добавления события:", err2)
+	// } else {
+	// 	fmt.Println("Добавлено:", event2.Title)
+	// }
+	// event3, err3 := c.AddEvent("Кушац", "1999/12/12", "Средний")
+	// if err3 != nil {
+	// 	fmt.Println("Ошибка добавления события:", err3)
+	// } else {
+	// 	fmt.Println("Добавлено:", event3.Title)
+	// }
+	// err12 := c.EditEvent(event1.ID, "Завод UPD", "2000/02/02", "Низкий")
+	// if err12 != nil {
+	// 	fmt.Println("Ошибка редактирования:", err12)
+	// }
+	// err13 := c.DeleteEvent(event2.ID)
+	// if err13 != nil {
+	// 	fmt.Println("Ошибка удаления:", err13)
+	// }
+	c.ShowEvents()
+	errS := c.Save()
+	if errS != nil {
+		fmt.Println("Ошибка сохранения:", errS)
 	}
-	event1, err1 := c.AddEvent("jopa", "2025/06/12 14:00", "Высокий")
-	if err1 != nil {
-		fmt.Println("Error:", err1)
-	} else {
-		fmt.Println(event1.Title, "added")
-	}
-	event2, err2 := c.AddEvent("One more meeting", "2025/06/12", "Высокий")
-	if err2 != nil {
-		fmt.Println("Error:", err2)
-	} else {
-		fmt.Println(event2.Title, "added")
-	}
-	err32 := c.EditEvent(event2.ID, "Call", "2025/06/12 16:50", "Высокий")
-	if err32 != nil {
-		fmt.Println("Error:", err32)
-	} else {
-		fmt.Println("Event updated")
-	}
-	er12321 := c.DeleteEvent("Call") // не работает удаление
-	if er12321 != nil {
-		fmt.Println("Error", er12321)
-	}
-	errShow2 := c.ShowEvents()
-	if errShow2 != nil {
-		fmt.Println(errShow2)
-	}
-	defer c.Save() // не понял для чего defer
-	fmt.Scanln()
+	fmt.Println(jsonStorage.GetFilename())
+	// fmt.Println("----Новый календарь----")
+	// zipStorage := storage.NewZipStorage("calendar.zip")
+	// cz := calendar.NewCalendar(zipStorage)
+	// err14 := cz.Load()
+	// if err != nil {
+	// 	fmt.Println("Ошибка загрузки:", err14)
+	// }
+	// zEvent1, err21 := cz.AddEvent("Тренировка", "2025/07/01 18:00", "Высокий")
+	// if err21 != nil {
+	// 	fmt.Println("Ошибка добавления события:", err21)
+	// } else {
+	// 	fmt.Println("Добавлено:", zEvent1.Title)
+	// }
+	// zipEvent2, err22 := cz.AddEvent("Шарага", "2025/07/02 09:30", "Средний")
+	// if err22 != nil {
+	// 	fmt.Println("Ошибка добавления события:", err22)
+	// } else {
+	// 	fmt.Println("Добавлено:", zipEvent2.Title)
+	// }
+	// err23 := cz.EditEvent(zEvent1.ID, "Созвон UPD", "2025/07/01 19:00", "Низкий")
+	// if err23 != nil {
+	// 	fmt.Println("Ошибка редактирования:", err23)
+	// }
+	// cz.ShowEvents()
+	// err24 := cz.Save()
+	// if err24 != nil {
+	// 	fmt.Println("Ошибка сохранения:", err24)
+	// }
+	// fmt.Println(zipStorage.GetFilename())
 }
