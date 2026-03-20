@@ -38,7 +38,7 @@ func (e *Event) Update(title, dateStr, priority string) error {
 }
 
 func (e *Event) AddReminder(message string, at time.Time) {
-	e.Reminder = reminder.NewReminder(message, at)
+	e.Reminder, _ = reminder.NewReminder(message, at)
 }
 
 func (e *Event) RemoveReminder() {
@@ -50,7 +50,7 @@ func NewEvent(title, dateStr, priority string) (*Event, error) {
 	if isValid {
 		dateParser, err := dateparse.ParseAny(dateStr)
 		if err != nil {
-			return &Event{}, errors.New("неверный формат даты")
+			return nil, errors.New("неверный формат даты")
 		}
 		return &Event{
 			ID:       getNextID(),

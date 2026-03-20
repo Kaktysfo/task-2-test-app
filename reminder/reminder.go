@@ -1,8 +1,11 @@
 package reminder
 
 import (
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/Kaktysfo/app/validation"
 )
 
 type Reminder struct {
@@ -11,12 +14,16 @@ type Reminder struct {
 	Sent     bool
 }
 
-func NewReminder(message string, at time.Time) *Reminder {
+func NewReminder(message string, at time.Time) (*Reminder, error) {
+	check := validation.IsValidateTitle(message)
+	if check == false {
+		return nil, errors.New("неверный формат заголовка")
+	}
 	return &Reminder{
 		Message:  message,
 		RemindAt: at,
 		Sent:     false,
-	}
+	}, nil
 }
 
 func (r *Reminder) Send() {
@@ -27,7 +34,5 @@ func (r *Reminder) Send() {
 	r.Sent = true
 }
 
-func (r *Reminder) Stop() { // нужно было самому написать?
+func (r *Reminder) Stop() {
 }
-
-// не понятно что значит может управлять свом состоянием
