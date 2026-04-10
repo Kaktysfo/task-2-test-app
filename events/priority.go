@@ -4,6 +4,10 @@ import "errors"
 
 type Priority string
 
+var (
+	ErrInvalidPriority = errors.New("Неверный приоритет!\nФормат приоритета: \"Высокий\",\"Средний\",\"Низкий\"")
+)
+
 const (
 	PriorityHigh   Priority = "Высокий"
 	PriorityMedium Priority = "Средний"
@@ -15,6 +19,6 @@ func (p Priority) Validate() error {
 	case PriorityHigh, PriorityMedium, PriorityLow:
 		return nil
 	default:
-		return errors.New("неверный приоритет")
+		return ErrInvalidPriority
 	}
 }

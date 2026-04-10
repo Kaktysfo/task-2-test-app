@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Kaktysfo/app/events"
 	"github.com/Kaktysfo/app/storage"
@@ -12,33 +13,36 @@ import (
 var (
 	EventError      = errors.New("cобытие с таким именем уже существует")
 	addEventError   = errors.New("ошибка добавления события")
-	deleteError     = errors.New("ошибка удаления события")
+	deleteFindError = errors.New("событие с таким именем не найдено")
 	showError       = errors.New("список событий пуст")
 	saveError       = errors.New("ошибка маршлинга")
 	deserError      = errors.New("ошибка десериализации")
 	cSaveError      = errors.New("ошибка сохранения события")
 	storageNilError = errors.New("хранилище пустое")
+	EventRemindNil  = errors.New("у события с таким ID нет активного напоминания")
 )
 
 type Calendar struct {
 	calendarEvents map[string]*events.Event
-	storage        *storage.Storage
+	storage        storage.Store
+	Notification   chan string
 }
 
-func NewCalendar(s *storage.Storage) *Calendar {
+func NewCalendar(s storage.Store) *Calendar {
 	return &Calendar{
 		calendarEvents: make(map[string]*events.Event),
 		storage:        s,
+		Notification:   make(chan string),
 	}
 }
 
-func (c *Calendar) AddEvent(name, date, pririty string) (*events.Event, error) {
+func (c *Calendar) AddEvent(name string, date string, priority events.Priority) (*events.Event, error) {
 	for _, event := range c.calendarEvents {
 		if event.Title == name {
 			return nil, EventError
 		}
 	}
-	event, err := events.NewEvent(name, date, pririty)
+	event, err := events.NewEvent(name, date, priority)
 	if err != nil {
 		return nil, addEventError
 	}
@@ -50,6 +54,38 @@ func (c *Calendar) AddEvent(name, date, pririty string) (*events.Event, error) {
 	return event, nil
 }
 
+func (c *Calendar) SetEventReminder(ID string, reminderMessage string, reminderTimer time.Time) error {
+	err := c.isEventExistByID(ID)
+	if err != nil {
+		return err
+	}
+	event := c.calendarEvents[ID]
+	event.AddReminder(reminderMessage, reminderTimer, c.Notify)
+	return nil
+}
+
+func (c *Calendar) CancelEventReminder(ID string) error {
+	err := c.isEventExistByID(ID)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	event := c.calendarEvents[ID]
+	if event.Reminder == nil {
+		return EventRemindNil
+	}
+	event.RemoveReminder()
+	err2 := c.Save()
+	if err2 != nil {
+		return err2
+	}
+	return nil
+}
+
+func (c *Calendar) Notify(msg string) {
+	c.Notification <- msg
+}
+
 func (c *Calendar) ShowEvents() error {
 	if len(c.calendarEvents) == 0 {
 		return showError
@@ -57,15 +93,15 @@ func (c *Calendar) ShowEvents() error {
 	fmt.Println("▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼")
 	for _, event := range c.calendarEvents {
 		fmt.Printf(
-			"\nНазвание события: %s || Дата и время события: %s || Приоритет: %s",
+			"\nID события: %s || Название события: %s || Дата и время события: %s || Приоритет: %s",
+			event.ID,
 			event.Title,
 			event.StartAt,
 			event.Priority,
 		)
+		fmt.Println("")
 	}
-
-	fmt.Println("\n▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲")
-
+	fmt.Println("▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲")
 	return nil
 }
 
@@ -76,24 +112,16 @@ func (c *Calendar) isEventExistByID(id string) error {
 	return nil
 }
 
-func (c *Calendar) isEventExistByName(name string) (*events.Event, error) {
-	for id, event := range c.calendarEvents {
-		if event.Title == name {
-			return c.calendarEvents[id], nil
-		}
-	}
-	return nil, EventError
-}
-
-func (c *Calendar) DeleteEvent(name string) error { // не работает функция удаления
-	event, err := c.isEventExistByName(name)
+func (c *Calendar) DeleteEvent(ID string) error {
+	err := c.isEventExistByID(ID)
 	if err != nil {
-		return deleteError
+		return deleteFindError
 	}
-	return c.DeleteEvent(event.ID)
+	delete(c.calendarEvents, ID)
+	return nil
 }
 
-func (c *Calendar) EditEvent(id, newTitle, dateStr, priority string) error {
+func (c *Calendar) EditEvent(id, newTitle, dateStr string, priority events.Priority) error {
 	e, exists := c.calendarEvents[id]
 	if !exists {
 		return errors.New("не удалось найти событие")
@@ -131,16 +159,3 @@ func (c *Calendar) Load() error {
 	}
 	return nil
 }
-
-//func fullValidation(name, title string) error {
-//	if _, ok := calendarEvents[name]; !ok {
-//		return TitleError
-//	}
-//	if ok := validation.IsValidateTitle(title); !ok {
-//		return errors.New("введен некорректно заголовок")
-//	}
-//	if calendarEvents[name].Title == title {
-//		return errors.New("такой заголовок уже существует")
-//	}
-//	return nil
-//}
